@@ -75,6 +75,11 @@ export enum PythonVersion {
    * Python 3 (the exact version depends on GlueVersion and JobCommand used)
    */
   THREE = '3',
+
+  /**
+   * Python 3.9 (currently available for python shell jobs)
+   */
+  V3_9 = '3.9',
 }
 
 /**
@@ -287,8 +292,14 @@ export class JobExecutable {
       if (config.language !== JobLanguage.PYTHON) {
         throw new Error('Python shell requires the language to be set to Python');
       }
-      if ([GlueVersion.V0_9, GlueVersion.V2_0, GlueVersion.V3_0].includes(config.glueVersion)) {
-        throw new Error(`Specified GlueVersion ${config.glueVersion.name} does not support Python Shell`);
+      if (config.pythonVersion === PythonVersion.V3_9) {
+        if ([GlueVersion.V0_9, GlueVersion.V1_0, GlueVersion.V2_0].includes(config.glueVersion)) {
+          throw new Error(`Specified GlueVersion ${config.glueVersion.name} does not support Python Shell for 3.9`);
+        }
+      } else {
+        if ([GlueVersion.V0_9, GlueVersion.V2_0, GlueVersion.V3_0].includes(config.glueVersion)) {
+          throw new Error(`Specified GlueVersion ${config.glueVersion.name} does not support Python Shell`);
+        }
       }
     }
     if (config.extraJarsFirst && [GlueVersion.V0_9, GlueVersion.V1_0].includes(config.glueVersion)) {

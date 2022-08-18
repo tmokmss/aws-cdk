@@ -46,6 +46,16 @@ describe('JobExecutable', () => {
       })).toBeDefined();
     });
 
+    test('with valid config should succeed (python 3.9)', () => {
+      expect(glue.JobExecutable.of({
+        glueVersion: glue.GlueVersion.V3_0,
+        type: glue.JobType.PYTHON_SHELL,
+        language: glue.JobLanguage.PYTHON,
+        pythonVersion: glue.PythonVersion.V3_9,
+        script,
+      })).toBeDefined();
+    });
+
     test('with JobType.PYTHON_SHELL and a language other than JobLanguage.PYTHON should throw', () => {
       expect(() => glue.JobExecutable.of({
         glueVersion: glue.GlueVersion.V3_0,
@@ -75,6 +85,18 @@ describe('JobExecutable', () => {
           script,
           glueVersion,
         })).toThrow(`Specified GlueVersion ${glueVersion.name} does not support Python Shell`);
+      });
+    });
+
+    [glue.GlueVersion.V0_9, glue.GlueVersion.V1_0, glue.GlueVersion.V2_0].forEach((glueVersion) => {
+      test(`with JobType.PYTHON_SHELL, Python 3.9 and GlueVersion ${glueVersion} should throw`, () => {
+        expect(() => glue.JobExecutable.of({
+          type: glue.JobType.PYTHON_SHELL,
+          language: glue.JobLanguage.PYTHON,
+          pythonVersion: glue.PythonVersion.V3_9,
+          script,
+          glueVersion,
+        })).toThrow(`Specified GlueVersion ${glueVersion.name} does not support Python Shell for 3.9`);
       });
     });
 

@@ -1,5 +1,5 @@
 {
-  "version": "17.0.0",
+  "version": "20.0.0",
   "artifacts": {
     "Tree": {
       "type": "cdk:tree",
@@ -111,6 +111,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ShellJob42E81F95"
+          }
+        ],
+        "/aws-glue-job/ShellJobForV3.9/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ShellJobForV39ServiceRole0D61CF4B"
+          }
+        ],
+        "/aws-glue-job/ShellJobForV3.9/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ShellJobForV39ServiceRoleDefaultPolicyFD5F1CB0"
+          }
+        ],
+        "/aws-glue-job/ShellJobForV3.9/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ShellJobForV39191B4D76"
           }
         ]
       },

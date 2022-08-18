@@ -86,4 +86,20 @@ new glue.Job(stack, 'ShellJob', {
   },
 });
 
+new glue.Job(stack, 'ShellJobForV3.9', {
+  jobName: 'ShellJobForV3.9',
+  executable: glue.JobExecutable.pythonShell({
+    glueVersion: glue.GlueVersion.V3_0,
+    pythonVersion: glue.PythonVersion.V3_9,
+    script,
+  }),
+  defaultArguments: {
+    arg1: 'value1',
+    arg2: 'value2',
+  },
+  tags: {
+    key: 'value',
+  },
+});
+
 app.synth();
