@@ -284,6 +284,92 @@ describe('GitHub source', () => {
       'Token': 'my-access-token',
     });
   });
+
+  test('can provide CodeConnections connection ARN for authentication', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN
+    new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {
+      connectionArn: 'arn:aws:codeconnections:us-east-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+
+    // THEN
+    Template.fromStack(stack).hasResourceProperties('AWS::CodeBuild::SourceCredential', {
+      'ServerType': 'GITHUB',
+      'AuthType': 'CODECONNECTIONS',
+      'Token': 'arn:aws:codeconnections:us-east-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+  });
+
+  test('can provide legacy CodeStar Connections connection ARN for authentication', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN
+    new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {
+      connectionArn: 'arn:aws:codestar-connections:us-east-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+
+    // THEN
+    Template.fromStack(stack).hasResourceProperties('AWS::CodeBuild::SourceCredential', {
+      'ServerType': 'GITHUB',
+      'AuthType': 'CODECONNECTIONS',
+      'Token': 'arn:aws:codestar-connections:us-east-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+  });
+
+  test('throws error when neither accessToken nor connectionArn is provided', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN/THEN
+    expect(() => {
+      new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {});
+    }).toThrow('Either accessToken or connectionArn must be provided');
+  });
+
+  test('throws error when both accessToken and connectionArn are provided', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN/THEN
+    expect(() => {
+      new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {
+        accessToken: cdk.SecretValue.unsafePlainText('my-access-token'),
+        connectionArn: 'arn:aws:codeconnections:us-east-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+      });
+    }).toThrow('Cannot provide both accessToken and connectionArn. Use either accessToken for personal access token authentication or connectionArn for CodeConnections authentication');
+  });
+
+  test('throws error when connectionArn has invalid format', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN/THEN
+    expect(() => {
+      new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {
+        connectionArn: 'invalid-arn-format',
+      });
+    }).toThrow('Invalid connectionArn format. Expected format: arn:partition:codeconnections:region:account:connection/connection-id or arn:partition:codestar-connections:region:account:connection/connection-id');
+  });
+
+  test('accepts connectionArn with different partition', () => {
+    // GIVEN
+    const stack = new cdk.Stack();
+
+    // WHEN
+    new codebuild.GitHubSourceCredentials(stack, 'GitHubSourceCredentials', {
+      connectionArn: 'arn:aws-cn:codeconnections:cn-north-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+
+    // THEN
+    Template.fromStack(stack).hasResourceProperties('AWS::CodeBuild::SourceCredential', {
+      'ServerType': 'GITHUB',
+      'AuthType': 'CODECONNECTIONS',
+      'Token': 'arn:aws-cn:codeconnections:cn-north-1:123456789012:connection/12345678-abcd-12ab-34cdef5678gh',
+    });
+  });
 });
 
 describe('GitHub Enterprise source', () => {

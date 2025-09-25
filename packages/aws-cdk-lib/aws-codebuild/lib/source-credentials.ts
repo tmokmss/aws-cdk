@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { CfnSourceCredential } from './codebuild.generated';
-import { Resource, SecretValue } from '../../core';
+import { Resource, SecretValue, UnscopedValidationError } from '../../core';
 import { addConstructMetadata } from '../../core/lib/metadata-resource';
 import { propertyInjectable } from '../../core/lib/prop-injectable';
 
@@ -10,8 +10,21 @@ import { propertyInjectable } from '../../core/lib/prop-injectable';
 export interface GitHubSourceCredentialsProps {
   /**
    * The personal access token to use when contacting the GitHub API.
+   *
+   * Cannot be used together with connectionArn.
    */
-  readonly accessToken: SecretValue;
+  readonly accessToken?: SecretValue;
+
+  /**
+   * The ARN of the CodeConnections connection to use for GitHub authentication.
+   *
+   * Supports both legacy CodeStar Connections and new CodeConnections ARN formats:
+   * - arn:aws:codestar-connections:region:account:connection/connection-id
+   * - arn:aws:codeconnections:region:account:connection/connection-id
+   *
+   * Cannot be used together with accessToken.
+   */
+  readonly connectionArn?: string;
 }
 
 /**
@@ -33,10 +46,34 @@ export class GitHubSourceCredentials extends Resource {
     // Enhanced CDK Analytics Telemetry
     addConstructMetadata(this, props);
 
+    // Validate that exactly one of accessToken or connectionArn is provided
+    const hasAccessToken = props.accessToken !== undefined;
+    const hasConnectionArn = props.connectionArn !== undefined;
+
+    if (!hasAccessToken && !hasConnectionArn) {
+      throw new UnscopedValidationError('Either accessToken or connectionArn must be provided');
+    }
+
+    if (hasAccessToken && hasConnectionArn) {
+      throw new UnscopedValidationError(
+        'Cannot provide both accessToken and connectionArn. Use either accessToken for personal access token authentication or connectionArn for CodeConnections authentication',
+      );
+    }
+
+    // Validate connectionArn format if provided
+    if (hasConnectionArn) {
+      const connectionArnPattern = /^arn:[^:]+:(codestar-connections|codeconnections):[^:]+:[^:]+:connection\/[a-zA-Z0-9-]+$/;
+      if (!connectionArnPattern.test(props.connectionArn!)) {
+        throw new UnscopedValidationError(
+          'Invalid connectionArn format. Expected format: arn:partition:codeconnections:region:account:connection/connection-id or arn:partition:codestar-connections:region:account:connection/connection-id',
+        );
+      }
+    }
+
     new CfnSourceCredential(this, 'Resource', {
       serverType: 'GITHUB',
-      authType: 'PERSONAL_ACCESS_TOKEN',
-      token: props.accessToken.unsafeUnwrap(), // Safe usage
+      authType: hasConnectionArn ? 'CODECONNECTIONS' : 'PERSONAL_ACCESS_TOKEN',
+      token: hasConnectionArn ? props.connectionArn! : props.accessToken!.unsafeUnwrap(), // Safe usage
     });
   }
 }
